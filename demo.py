@@ -1,15 +1,19 @@
-import sys
+import sys, time
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+import pyrocko.pile, pyrocko.pile_viewer, pyrocko.hamster_pile
+
 class MineDemo(QApplication):
+
 
     def __init__(self, args):
         QApplication.__init__(self, args)
 
         self._win = QMainWindow()
         self._win.show()
+
 
         self.connect(self, SIGNAL('lastWindowClosed()'), self.quit)
         
@@ -35,9 +39,12 @@ class MineDemo(QApplication):
         
         self.frame = QFrame(self._win)
         self.frame.setLayout(self.layout)
+       
+        self.start_pile_viewer()
+        self._pile_viewer.setParent(self._win)
         
-        self.layout.addWidget(infotext, 0,0,0,8)
-        self.layout.addWidget(label, 1,0,1,7)
+        self.layout.addWidget(infotext, 0,0,1,9)
+        self.layout.addWidget(self._pile_viewer, 1,0,1,9)
         self.layout.addWidget(guititle, 2,0)
         self.layout.addWidget(button1, 2,1)
         self.layout.addWidget(button2, 2,2)
@@ -50,8 +57,46 @@ class MineDemo(QApplication):
 
         self._win.setCentralWidget(self.frame)
 
-args = sys.argv
+    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=120):
+        self._source_pile = pyrocko.pile.make_pile(['demodata.mseed'])
+        self._tlast = time.time()
+        
+        p = pyrocko.hamster_pile.HamsterPile()
+        p.set_fixation_length(20.)
+        
+        self._pile_viewer = pyrocko.pile_viewer.PileViewer(p, ntracks_shown_max=ntracks,
+                use_opengl=use_opengl, panel_parent=panel_parent)
+        
+        self._pile_viewer.get_view().follow(float(follow))
+        
+        self._timer = QTimer( self )
+        self.connect( self._timer, SIGNAL("timeout()"), self.periodical ) 
+        self._timer.setInterval(3000)
+        self._timer.start()
 
+    def periodical(self):
+        pile = self._source_pile
+        tnow = time.time()
+        tlen = tnow - self._tlast
+
+        tmin = pile.tmin + self._tlast % (pile.tmax - pile.tmin)
+        tmax = tmin + tlen 
+
+        def shiftinsert(tmin, tmax, tdelay):
+            traces = pile.all(tmin=tmin, tmax=tmax)
+            for trace in traces:
+                trace.shift(tdelay)
+                self._pile_viewer.get_pile().insert_trace(trace)
+      
+        shiftinsert(tmin, tmax, self._tlast-tmin)
+        if tmax > pile.tmax:
+            tmin = tmin - (pile.tmax - pile.tmin)
+            tmax = tmax - (pile.tmax - pile.tmin)
+            shiftinsert(tmin, tmax, self._tlast-tmin)
+        
+        self._tlast = tnow
+
+args = sys.argv
 minedemo = MineDemo(args)
 minedemo.exec_()
 
