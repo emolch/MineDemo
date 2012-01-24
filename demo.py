@@ -21,18 +21,17 @@ class MineDemo(QApplication):
         button6 = QPushButton('Quit', self._win)
         self.connect(button6, SIGNAL('clicked()'), self.quit)
         
-	infotext = QLabel('Long text giving information on the chosen application .................', self._win)
+        infotext = QLabel('Long text giving information on the chosen application .................', self._win)
         label = QLabel('Second Label', self._win)
-	imagelogomine = QPixmap("./logomine_small.png")
+        imagelogomine = QPixmap("./logomine_small.png")
         logomine = QLabel('', self._win)
-	logomine.setPixmap(imagelogomine)
-	imagelogogeotech = QPixmap("./Logo_GEOTECH_small.png")
+        logomine.setPixmap(imagelogomine)
+        imagelogogeotech = QPixmap("./Logo_GEOTECH_small.png")
         logogeotech = QLabel('', self._win)
         logogeotech.setPixmap(imagelogogeotech)
-	guititle = QLabel('MINE Project GUI Demonstrator', self._win)
+        guititle = QLabel('MINE Project GUI Demonstrator', self._win)
         
-        
-	self.layout = QGridLayout()
+        self.layout = QGridLayout()
         
         self.frame = QFrame(self._win)
         self.frame.setLayout(self.layout)
@@ -48,7 +47,6 @@ class MineDemo(QApplication):
         self.layout.addWidget(button6, 2,6)
         self.layout.addWidget(logomine, 2,7)
         self.layout.addWidget(logogeotech, 2,8)
-
 
         self._win.setCentralWidget(self.frame)
 
