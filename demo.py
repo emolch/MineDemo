@@ -74,8 +74,11 @@ class MineDemo(QApplication):
         self._pile_viewer = pyrocko.pile_viewer.PileViewer(p, ntracks_shown_max=ntracks,
                 use_opengl=use_opengl, panel_parent=panel_parent)
         
-        self._pile_viewer.get_view().follow(float(follow))
-        
+        v = self._pile_viewer.get_view()
+        v.follow(float(follow))
+        ev = pyrocko.model.Event(time=time.time())
+        v.add_marker(pyrocko.gui_util.EventMarker(ev))
+
         self._timer = QTimer( self )
         self.connect( self._timer, SIGNAL("timeout()"), self.periodical ) 
         self._timer.setInterval(4000)
@@ -111,6 +114,10 @@ class MineDemo(QApplication):
         self.layout.addWidget(event_ID,2,4,1,1)
 
     def location(self):
+         
+        hideExceptForWidget(self)
+        
+
         x_shift = 20
         y_shift = 20
         # create objects for drawing
@@ -129,7 +136,7 @@ class MineDemo(QApplication):
 
         #create canvas for overview map and add to layout:
         map_canvas = QGraphicsView()
-        self.layout.addWidget(map_canvas,1,1)
+        self.layout.addWidget(map_canvas,1,0)
 
         self.loc_map = QGraphicsScene()
         map_canvas.setScene(self.loc_map)
@@ -151,6 +158,17 @@ class MineDemo(QApplication):
         d = self.scene_data2.pop(0)
         item = d['routine'](*d['args'])
         item.setZValue(d['z'])      # setZValue sets stacking order of items
+
+        
+    def Detection(self):
+        self._pile_viewer.show()
+
+def hideExceptForWidget(self,widget=None):
+    '''
+    Hide each widget in upper grid, except for the widget given as parameter
+    '''
+    # Hide trace viewer
+    self._pile_viewer.hide()
 
 args = sys.argv
 minedemo = MineDemo(args)
