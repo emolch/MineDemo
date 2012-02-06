@@ -66,7 +66,7 @@ class MineDemo(QApplication):
         self._win.setCentralWidget(self.frame)
 
     def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=120):
-        self._source_pile = pyrocko.pile.make_pile(['demodata.mseed'])
+        self._source_pile = pyrocko.pile.make_pile(['Demodataset.mseed'])
         self._tlast = time.time()
          
         p = pyrocko.hamster_pile.HamsterPile()
