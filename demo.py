@@ -18,21 +18,22 @@ class MineDemo(QApplication):
         self._win.setWindowTitle("MINE")
         self._win.show()
 
-
         self.connect(self, SIGNAL('lastWindowClosed()'), self.quit)
         
         button1 = QPushButton('Detection', self._win)
+        self.connect(button1, SIGNAL('clicked()'), self.Detection)
+
         button2 = QPushButton('Location', self._win)
-        self.connect(button2, SIGNAL('clicked()'), self.location)
+        self.connect(button2, SIGNAL('clicked()'), self.Location)
+        
         button3 = QPushButton('FocalMechanism', self._win)
         button4 = QPushButton('Statistics', self._win)
         button5 = QPushButton('Tomography', self._win)
         button6 = QPushButton('Quit', self._win)
         self.connect(button6, SIGNAL('clicked()'), self.quit)
         
-        infotext = QLabel('Long text giving information on the chosen application .................', self._win)
+        infotext = QLabel('Long text giving information on application',self._win)
         infotext.setStyleSheet("font: 18pt") 
-        label = QLabel('Second Label', self._win)
 
         imagelogomine = QPixmap("./logomine_small.png")
         logomine = QLabel('', self._win)
@@ -108,16 +109,19 @@ class MineDemo(QApplication):
     
     def event_alert(self,t_detection):
         event_ID = QLabel(t_detection, self._win)
-        
         event_ID.setStyleSheet("background-color: rgb(255,0,0)")
-        
         self.layout.addWidget(event_ID,2,4,1,1)
 
-    def location(self):
-         
-        hideExceptForWidget(self)
-        
 
+        
+    def Detection(self):
+        self._pile_viewer.show()
+
+    def Location(self):
+        #self.former_widget = self.layout.itemAtPosition(1,0)
+        #print(self.former_widget)
+        self._pile_viewer.hide()
+        
         x_shift = 20
         y_shift = 20
         # create objects for drawing
@@ -136,11 +140,12 @@ class MineDemo(QApplication):
 
         #create canvas for overview map and add to layout:
         map_canvas = QGraphicsView()
-        self.layout.addWidget(map_canvas,1,0)
+        self.layout.addWidget(map_canvas,1,0,1,6)
 
         self.loc_map = QGraphicsScene()
         map_canvas.setScene(self.loc_map)
 
+        self.loc_map.setParent(self._win)
         # Data do be drawed:
         self.scene_data2 = []
         self.scene_data = []
@@ -158,17 +163,6 @@ class MineDemo(QApplication):
         d = self.scene_data2.pop(0)
         item = d['routine'](*d['args'])
         item.setZValue(d['z'])      # setZValue sets stacking order of items
-
-        
-    def Detection(self):
-        self._pile_viewer.show()
-
-def hideExceptForWidget(self,widget=None):
-    '''
-    Hide each widget in upper grid, except for the widget given as parameter
-    '''
-    # Hide trace viewer
-    self._pile_viewer.hide()
 
 args = sys.argv
 minedemo = MineDemo(args)
