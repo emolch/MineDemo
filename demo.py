@@ -121,7 +121,11 @@ class MineDemo(QApplication):
         self._pile_viewer.show()
 
     def Location(self):
-        
+        '''
+        Activated when clicking the 'Location' button.
+        Shows map with stations (triangles).
+        '''
+
         self._pile_viewer.hide()
         
         x_shift = 20
