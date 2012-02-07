@@ -8,7 +8,10 @@ import pyrocko.pile, pyrocko.pile_viewer, pyrocko.hamster_pile
 import pyrocko
 
 class MineDemo(QApplication):
-
+    
+    '''
+    This is a demo GUI
+    '''
 
     def __init__(self, args):
         QApplication.__init__(self, args)
@@ -118,8 +121,7 @@ class MineDemo(QApplication):
         self._pile_viewer.show()
 
     def Location(self):
-        #self.former_widget = self.layout.itemAtPosition(1,0)
-        #print(self.former_widget)
+        
         self._pile_viewer.hide()
         
         x_shift = 20
