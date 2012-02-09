@@ -24,7 +24,7 @@ class MineDemo(QApplication):
         self.connect(self, SIGNAL('lastWindowClosed()'), self.quit)
         
         button1 = QPushButton('Detection', self._win)
-        self.connect(button1, SIGNAL('clicked()'), self.Detection)
+        self.connect(button1, SIGNAL('clicked()'), self.stalta)
 
         button2 = QPushButton('Location', self._win)
         self.connect(button2, SIGNAL('clicked()'), self.Location)
@@ -169,7 +169,94 @@ class MineDemo(QApplication):
         d = self.scene_data2.pop(0)
         item = d['routine'](*d['args'])
         item.setZValue(d['z'])      # setZValue sets stacking order of items
+    
+##### STA LTA #########################################################################   
+    def stalta(self):
+        '''Main work routine of the snuffling.'''
+        
+        #self.cleanup()
+        
+        pile = self._source_pile
+        #pile = self.get_pile()
+        if self.apply_to_all:
+            tmin, tmax = pile.get_tmin(), pile.get_tmax()
+        else:
+            tmin, tmax = self.get_viewer().get_time_range()
+    
+        swin, ratio = self.swin, self.ratio
+        lwin = swin * ratio
+        
+        tinc = min(lwin * self.block_factor, tmax-tmin)
+        tpad = lwin*self.tpad_factor
+        
+        show_level_traces = self.show_level_traces
+        
+        if show_level_traces and tmax-tmin > lwin * 150:
+            self.error('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
+            show_level_traces = False
+        
+        # ACHTUNG: Pfad korrigieren pjoin(getcwd()):
+        markers = []
+        catalogue=open('catalogue.out','w')        
+        for traces in pile.chopper_grouped(tmin=tmin, tmax=tmax, tinc=tinc, tpad=tpad, want_incomplete=False,
+                gather=lambda tr: tr.nslc_id[:3]):
 
+            etr = None
+            nslcs = []
+            deltat = 0.
+            for trace in traces:
+                if deltat == 0:
+                    deltat = trace.deltat
+                else:
+                    if abs(deltat - trace.deltat) > 0.0001*deltat:
+                        
+                        logger.error('skipping trace %s.%s.%s.%s with unexpected sampling rate' % trace.nslc_id)
+                        continue
+
+                trace.lowpass(4, self.lowpass)
+                trace.highpass(4, self.highpass)
+                 
+                trace.ydata = trace.ydata**2
+                trace.ydata = trace.ydata.astype(num.float32)
+                if etr is None:
+                    etr = trace
+                else:
+                    etr.add(trace)
+
+                nslcs.append(trace.nslc_id)
+            
+            if etr is not None: 
+                autopick.recursive_stalta(swin, lwin, self.ks, self.kl, self.kd, etr)                   
+                etr.shift(-swin)
+                etr.set_codes(channel='STA/LTA')
+                etr.meta = { 'tabu': True }
+                
+                etr.chop(etr.tmin + lwin, etr.tmax - lwin)
+
+                #tpeaks, apeaks = etr.peaks(self.level, swin*2., deadtime=False)
+                tpeaks, apeaks, tzeros = etr.peaks(self.level, swin*2., deadtime=True)
+                if show_level_traces:
+                    #etr.chop(trace.wmin, trace.wmax)
+                    self.add_traces([etr])
+
+                for t, a in zip(tpeaks, apeaks):
+                    print nslcs, util.time_to_str(t)
+                    staz=nslcs[0]
+                    catalogue.write('sta'+str(staz[1])+' '+util.time_to_str(t)+' '+str(a)+'\n')
+                    if trace.wmin <= t <= trace.wmax:
+                        mark = pile_viewer.Marker(nslcs, t, t)
+                        print mark, a
+                        markers.append(mark)
+                                           
+        if len(markers) == 1:
+            mark0 = markers[0]
+            mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin, mark0.tmin,  kind=1)
+            mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin, mark0.tmin+swin, kind=2)
+            #markers.extend([mark_l, mark_s])
+
+        self.add_markers(markers)
+        catalogue.close()
+#-------------------------------------------------------------------------------------------
 args = sys.argv
 minedemo = MineDemo(args)
 minedemo.event_alert('latest Event: '+'234')
