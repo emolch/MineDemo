@@ -171,6 +171,10 @@ class MineDemo(QApplication):
         item.setZValue(d['z'])      # setZValue sets stacking order of items
     
 ##### STA LTA #########################################################################   
+    ''' Based on stalta by Francesco Grigoli.
+    All values are preliminary. 
+    TODO: Add button: "change LTASTA parameters --> snufflings' panel will open
+    '''
     def stalta(self):
         '''Main work routine of the snuffling.'''
         
@@ -178,19 +182,18 @@ class MineDemo(QApplication):
         
         pile = self._source_pile
         #pile = self.get_pile()
-        if self.apply_to_all:
-            tmin, tmax = pile.get_tmin(), pile.get_tmax()
-        else:
-            tmin, tmax = self.get_viewer().get_time_range()
-    
-        swin, ratio = self.swin, self.ratio
+        tmin, tmax = pile.get_tmin(), pile.get_tmax()
+        h=3600
+        #swin, ratio = self.swin, self.ratio
+        swin, ratio = 2*h, 10
         lwin = swin * ratio
-        
+        self.block_factor=50
         tinc = min(lwin * self.block_factor, tmax-tmin)
+        self.tpad_factor=10
         tpad = lwin*self.tpad_factor
         
-        show_level_traces = self.show_level_traces
-        
+        #show_level_traces = self.show_level_traces
+        show_level_traces = True
         if show_level_traces and tmax-tmin > lwin * 150:
             self.error('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
             show_level_traces = False
@@ -245,7 +248,7 @@ class MineDemo(QApplication):
                     catalogue.write('sta'+str(staz[1])+' '+util.time_to_str(t)+' '+str(a)+'\n')
                     if trace.wmin <= t <= trace.wmax:
                         mark = pile_viewer.Marker(nslcs, t, t)
-                        print mark, a
+                        #print mark, a
                         markers.append(mark)
                                            
         if len(markers) == 1:
@@ -254,7 +257,8 @@ class MineDemo(QApplication):
             mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin, mark0.tmin+swin, kind=2)
             #markers.extend([mark_l, mark_s])
 
-        self.add_markers(markers)
+        v = self._pile_viewer.get_view()
+        v.add_markers(markers)
         catalogue.close()
 #-------------------------------------------------------------------------------------------
 args = sys.argv
