@@ -68,7 +68,7 @@ class MineDemo(QApplication):
 
         self._win.setCentralWidget(self.frame)
 
-    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=250):
+    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=150):
         self._source_pile = pyrocko.pile.make_pile(['Demodataset.mseed'])
         self._tlast = time.time()
          
@@ -180,6 +180,7 @@ class MineDemo(QApplication):
         
         #self.cleanup()
         
+        #pile = self._pile_viewer.get_view()
         pile = self._source_pile
         #pile = self.get_pile()
         tmin, tmax = pile.get_tmin(), pile.get_tmax()
@@ -198,7 +199,7 @@ class MineDemo(QApplication):
             self.error('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
             show_level_traces = False
         
-        # ACHTUNG: Pfad korrigieren pjoin(getcwd()):
+        # ACHTUNG: evtl. Pfad korrigieren pjoin(getcwd()):
         markers = []
         catalogue=open('catalogue.out','w')        
         for traces in pile.chopper_grouped(tmin=tmin, tmax=tmax, tinc=tinc, tpad=tpad, want_incomplete=False,
@@ -215,9 +216,10 @@ class MineDemo(QApplication):
                         
                         logger.error('skipping trace %s.%s.%s.%s with unexpected sampling rate' % trace.nslc_id)
                         continue
-
-                trace.lowpass(4, self.lowpass)
-                trace.highpass(4, self.highpass)
+                lowpass = 250
+                highpass = 30
+                trace.lowpass(4, lowpass)
+                trace.highpass(4, highpass)
                  
                 trace.ydata = trace.ydata**2
                 trace.ydata = trace.ydata.astype(num.float32)
@@ -255,7 +257,7 @@ class MineDemo(QApplication):
             mark0 = markers[0]
             mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin, mark0.tmin,  kind=1)
             mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin, mark0.tmin+swin, kind=2)
-            #markers.extend([mark_l, mark_s])
+            markers.extend([mark_l, mark_s])
 
         v = self._pile_viewer.get_view()
         v.add_markers(markers)
