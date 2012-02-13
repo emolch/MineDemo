@@ -249,30 +249,39 @@ class MineDemo(QApplication):
                 if show_level_traces:
                     #etr.chop(trace.wmin, trace.wmax)
                     self.add_traces([etr])
-
+                
                 for t, a in zip(tpeaks, apeaks):
                     print nslcs, util.time_to_str(t)
                     staz=nslcs[0]
                     catalogue.write('sta'+str(staz[1])+' '+util.time_to_str(t)+' '+str(a)+'\n')
                     if trace.wmin <= t <= trace.wmax:
                         #mark = pile_viewer.Marker(nslcs, t, t)
+                        v = self._pile_viewer.get_view()
+                        v.follow(float(150))
                         mark = pyrocko.model.Event(t)
-                        
+                        v.add_marker(pyrocko.gui_util.EventMarker(mark))
                         #print mark, a
                         markers.append(mark)
-                                           
-        if len(markers) == 1:
+        '''if len(markers) == 1:
             mark0 = markers[0]
             mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin, mark0.tmin,  kind=1)
             mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin, mark0.tmin+swin, kind=2)
             markers.extend([mark_l, mark_s])
+        '''
         v = self._pile_viewer.get_view()
-        v.follow(float(follow))
-        ev = pyrocko.model.Event(time=time.time())
-        v.add_marker(pyrocko.gui_util.EventMarker(markers))
+        v.follow(float(150))
+        #ev = pyrocko.model.Event(time=time.time())
+        #v.add_marker(pyrocko.gui_util.EventMarker(markers))
 
         #v.add_markers(markers)
         catalogue.close()
+        '''
+        v = self._pile_viewer.get_view()
+        v.follow(float(follow))
+        ev = pyrocko.model.Event(time=time.time())
+        v.add_marker(pyrocko.gui_util.EventMarker(ev))
+        '''
+
 #-------------------------------------------------------------------------------------------
 args = sys.argv
 minedemo = MineDemo(args)
