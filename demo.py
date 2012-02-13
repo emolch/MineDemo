@@ -4,8 +4,9 @@ from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 import PyQt4
 
+import numpy as num
 import pyrocko.pile, pyrocko.pile_viewer, pyrocko.hamster_pile
-import pyrocko
+from pyrocko import autopick, util
 
 class MineDemo(QApplication):
     
@@ -184,19 +185,24 @@ class MineDemo(QApplication):
         pile = self._source_pile
         #pile = self.get_pile()
         tmin, tmax = pile.get_tmin(), pile.get_tmax()
-        h=3600
         #swin, ratio = self.swin, self.ratio
-        swin, ratio = 2*h, 10
+        swin, ratio = 0.01, 10
         lwin = swin * ratio
         self.block_factor=50
         tinc = min(lwin * self.block_factor, tmax-tmin)
         self.tpad_factor=10
         tpad = lwin*self.tpad_factor
-        
+        ks = 1.0
+        kl = 1.8
+        kd = 0.
+        level = 6.0
+
         #show_level_traces = self.show_level_traces
         show_level_traces = True
         if show_level_traces and tmax-tmin > lwin * 150:
-            self.error('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
+            
+            #self.error('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
+            print('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
             show_level_traces = False
         
         # ACHTUNG: evtl. Pfad korrigieren pjoin(getcwd()):
@@ -231,7 +237,7 @@ class MineDemo(QApplication):
                 nslcs.append(trace.nslc_id)
             
             if etr is not None: 
-                autopick.recursive_stalta(swin, lwin, self.ks, self.kl, self.kd, etr)                   
+                autopick.recursive_stalta(swin, lwin, ks, kl, kd, etr)                   
                 etr.shift(-swin)
                 etr.set_codes(channel='STA/LTA')
                 etr.meta = { 'tabu': True }
@@ -239,7 +245,7 @@ class MineDemo(QApplication):
                 etr.chop(etr.tmin + lwin, etr.tmax - lwin)
 
                 #tpeaks, apeaks = etr.peaks(self.level, swin*2., deadtime=False)
-                tpeaks, apeaks, tzeros = etr.peaks(self.level, swin*2., deadtime=True)
+                tpeaks, apeaks, tzeros = etr.peaks(level, swin*2., deadtime=True)
                 if show_level_traces:
                     #etr.chop(trace.wmin, trace.wmax)
                     self.add_traces([etr])
@@ -249,7 +255,9 @@ class MineDemo(QApplication):
                     staz=nslcs[0]
                     catalogue.write('sta'+str(staz[1])+' '+util.time_to_str(t)+' '+str(a)+'\n')
                     if trace.wmin <= t <= trace.wmax:
-                        mark = pile_viewer.Marker(nslcs, t, t)
+                        #mark = pile_viewer.Marker(nslcs, t, t)
+                        mark = pyrocko.model.Event(t)
+                        
                         #print mark, a
                         markers.append(mark)
                                            
@@ -258,9 +266,12 @@ class MineDemo(QApplication):
             mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin, mark0.tmin,  kind=1)
             mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin, mark0.tmin+swin, kind=2)
             markers.extend([mark_l, mark_s])
-
         v = self._pile_viewer.get_view()
-        v.add_markers(markers)
+        v.follow(float(follow))
+        ev = pyrocko.model.Event(time=time.time())
+        v.add_marker(pyrocko.gui_util.EventMarker(markers))
+
+        #v.add_markers(markers)
         catalogue.close()
 #-------------------------------------------------------------------------------------------
 args = sys.argv
