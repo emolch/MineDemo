@@ -17,6 +17,17 @@ class MineDemo(QApplication):
     def __init__(self, args):
         QApplication.__init__(self, args)
         
+        
+        # read station's data and store to dictionary:
+        self.Stat_file = open('Stations.dat','r')
+        self._stat_dict = []
+        for line in self.Stat_file:
+            Stat_data = line.split()
+            Stat_dict = {'Stat_name':Stat_data[0],'Stat_lat':Stat_data[1],
+                'Stat_lon':Stat_data[2],'Stat_z':Stat_data[3],'Stat_x':Stat_data[4],
+                'Stat_y':Stat_data[5]}
+            self._stat_dict.append(Stat_dict) 
+        
         self._win = QMainWindow()
         self._win.setGeometry(50,0,800,900)
         self._win.setWindowTitle("MINE")
@@ -126,51 +137,41 @@ class MineDemo(QApplication):
         Activated when clicking the 'Location' button.
         Shows map with stations (triangles).
         '''
-
         self._pile_viewer.hide()
+        #create canvas for overview map and add to layout:
+        scale_x=680
+        scale_y=680
+        map_canvas = QGraphicsView()
+        self.layout.addWidget(map_canvas,1,0,1,6)
         
-        x_shift = 20
-        y_shift = 20
-        # create objects for drawing
+        self.loc_map = QGraphicsScene()
+        map_canvas.setScene(self.loc_map)
+        
+        # TEST: add background image with location result
+        bg_loc = QPixmap("images/ruhr1xy_cropped.gif")
+        self.loc_map.addPixmap(bg_loc.scaled(scale_x,scale_y)) # bg_loc.scaled() returns copy.
+                                        # how to avoid that?
+
+        self.loc_map.setParent(self._win)
+
         dash_pen = QPen(QColor("black"))
         b_brush = QBrush(QColor("black"))
         r_brush = QBrush(QColor("red"))
-        triangle1 = QPolygonF()
-        triangle1.append(QPointF(10,-10))
-        triangle1.append(QPointF(0,5))
-        triangle1.append(QPointF(20,5))
+        for Station in self._stat_dict:
+            triangle = QPolygonF()
+            print Station
+            triangle.append(QPointF(10+(float(Station['Stat_x']))*scale_x,-10+(float(Station['Stat_y'])*scale_y)))
+            triangle.append(QPointF(0 +(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
+            triangle.append(QPointF(20+(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
+            self.scene_data = []
+            self.scene_data.append({'routine':self.loc_map.addPolygon,
+                                    'z':1,
+                                    'args':(triangle,dash_pen,b_brush)})
+     
+            d = self.scene_data.pop(0)
+            item = d['routine'](*d['args'])
+            item.setZValue(d['z'])      # setZValue sets stacking order of items
 
-        triangle = QPolygonF()
-        triangle.append(QPointF(10+x_shift,-10+y_shift))
-        triangle.append(QPointF(0+x_shift,5+y_shift))
-        triangle.append(QPointF(20+x_shift,5+y_shift))
-
-        #create canvas for overview map and add to layout:
-        map_canvas = QGraphicsView()
-        self.layout.addWidget(map_canvas,1,0,1,6)
-
-        self.loc_map = QGraphicsScene()
-        map_canvas.setScene(self.loc_map)
-
-        self.loc_map.setParent(self._win)
-        # Data do be drawed:
-        self.scene_data2 = []
-        self.scene_data = []
-        self.scene_data.append({'routine':self.loc_map.addPolygon,
-                                'z':1,
-                                'args':(triangle,dash_pen,b_brush)})
-        self.scene_data2.append({'routine':self.loc_map.addPolygon,
-                                'z':2,
-                                'args':(triangle1,dash_pen,r_brush)})
-        # draw Data:
-        d = self.scene_data.pop(0)
-        item = d['routine'](*d['args'])
-        item.setZValue(d['z'])      # setZValue sets stacking order of items
-
-        d = self.scene_data2.pop(0)
-        item = d['routine'](*d['args'])
-        item.setZValue(d['z'])      # setZValue sets stacking order of items
-    
 ##### STA LTA #########################################################################   
     ''' Based on stalta by Francesco Grigoli.
     All values are preliminary. 
@@ -207,7 +208,6 @@ class MineDemo(QApplication):
         
         # ACHTUNG: evtl. Pfad korrigieren pjoin(getcwd()):
         markers = []
-        catalogue=open('catalogue.out','w')        
         for traces in pile.chopper_grouped(tmin=tmin, tmax=tmax, tinc=tinc, tpad=tpad, want_incomplete=False,
                 gather=lambda tr: tr.nslc_id[:3]):
 
@@ -253,7 +253,6 @@ class MineDemo(QApplication):
                 for t, a in zip(tpeaks, apeaks):
                     print nslcs, util.time_to_str(t)
                     staz=nslcs[0]
-                    catalogue.write('sta'+str(staz[1])+' '+util.time_to_str(t)+' '+str(a)+'\n')
                     if trace.wmin <= t <= trace.wmax:
                         #mark = pile_viewer.Marker(nslcs, t, t)
                         v = self._pile_viewer.get_view()
@@ -274,7 +273,6 @@ class MineDemo(QApplication):
         #v.add_marker(pyrocko.gui_util.EventMarker(markers))
 
         #v.add_markers(markers)
-        catalogue.close()
         '''
         v = self._pile_viewer.get_view()
         v.follow(float(follow))
