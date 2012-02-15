@@ -2,17 +2,47 @@ import sys, time
 
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
-import PyQt4
 
 import numpy as num
-import pyrocko.pile, pyrocko.pile_viewer, pyrocko.hamster_pile
-from pyrocko import autopick, util
+import pyrocko.pile,  pyrocko.hamster_pile
+from pyrocko import autopick, util, pile_viewer
 
 class MineDemo(QApplication):
     
     '''
     This is a demo GUI
     '''
+
+
+    def addStations(self,Station_Dict,Canvas,scale_x=400,scale_y=400):
+        '''
+        Adds stations (triangles) to map.
+        @param Station_Dict Dictionary containing information of station locations
+        @param Canvas Canvas to draw on
+        @param scale_x give an x-scale value according to canvas size
+        @param scale_y give an y-scale value according to canvas size
+        '''
+        #!!!!!!!!!!!!!!!!!!!!!!!!!
+        # position probably incorrect?
+        #!!!!!!!!!!!!!!!!!!!!!!!!!
+        
+        dash_pen = QPen(QColor("black"))
+        b_brush = QBrush(QColor("black"))
+
+        # Add station after station to map_canvas:
+        for Station in Station_Dict:
+            triangle = QPolygonF()
+            triangle.append(QPointF(10+(float(Station['Stat_x']))*scale_x,-10+(float(Station['Stat_y'])*scale_y)))
+            triangle.append(QPointF(0 +(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
+            triangle.append(QPointF(20+(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
+            scene_data = []
+            scene_data.append({'routine':Canvas.addPolygon,
+                                    'z':1,
+                                    'args':(triangle,dash_pen,b_brush)})
+     
+            d = scene_data.pop(0)
+            item = d['routine'](*d['args'])
+            item.setZValue(d['z'])      # setZValue sets stacking order of items
 
     def __init__(self, args):
         QApplication.__init__(self, args)
@@ -153,24 +183,7 @@ class MineDemo(QApplication):
                                         # how to avoid that?
 
         self.loc_map.setParent(self._win)
-
-        dash_pen = QPen(QColor("black"))
-        b_brush = QBrush(QColor("black"))
-        r_brush = QBrush(QColor("red"))
-        for Station in self._stat_dict:
-            triangle = QPolygonF()
-            print Station
-            triangle.append(QPointF(10+(float(Station['Stat_x']))*scale_x,-10+(float(Station['Stat_y'])*scale_y)))
-            triangle.append(QPointF(0 +(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
-            triangle.append(QPointF(20+(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
-            self.scene_data = []
-            self.scene_data.append({'routine':self.loc_map.addPolygon,
-                                    'z':1,
-                                    'args':(triangle,dash_pen,b_brush)})
-     
-            d = self.scene_data.pop(0)
-            item = d['routine'](*d['args'])
-            item.setZValue(d['z'])      # setZValue sets stacking order of items
+        self.addStations(self._stat_dict,self.loc_map,680,680)
 
 ##### STA LTA #########################################################################   
     ''' Based on stalta by Francesco Grigoli.
@@ -180,13 +193,9 @@ class MineDemo(QApplication):
     def stalta(self):
         '''Main work routine of the snuffling.'''
         
-        #self.cleanup()
-        
-        #pile = self._pile_viewer.get_view()
         pile = self._source_pile
-        #pile = self.get_pile()
         tmin, tmax = pile.get_tmin(), pile.get_tmax()
-        #swin, ratio = self.swin, self.ratio
+        
         swin, ratio = 0.01, 10
         lwin = swin * ratio
         self.block_factor=50
@@ -198,15 +207,12 @@ class MineDemo(QApplication):
         kd = 0.
         level = 6.0
 
-        #show_level_traces = self.show_level_traces
         show_level_traces = True
         if show_level_traces and tmax-tmin > lwin * 150:
             
-            #self.error('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
             print('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
             show_level_traces = False
         
-        # ACHTUNG: evtl. Pfad korrigieren pjoin(getcwd()):
         markers = []
         for traces in pile.chopper_grouped(tmin=tmin, tmax=tmax, tinc=tinc, tpad=tpad, want_incomplete=False,
                 gather=lambda tr: tr.nslc_id[:3]):
@@ -243,43 +249,29 @@ class MineDemo(QApplication):
                 etr.meta = { 'tabu': True }
                 
                 etr.chop(etr.tmin + lwin, etr.tmax - lwin)
-
-                #tpeaks, apeaks = etr.peaks(self.level, swin*2., deadtime=False)
                 tpeaks, apeaks, tzeros = etr.peaks(level, swin*2., deadtime=True)
                 if show_level_traces:
                     #etr.chop(trace.wmin, trace.wmax)
                     self.add_traces([etr])
-                
+
                 for t, a in zip(tpeaks, apeaks):
                     print nslcs, util.time_to_str(t)
                     staz=nslcs[0]
                     if trace.wmin <= t <= trace.wmax:
-                        #mark = pile_viewer.Marker(nslcs, t, t)
-                        v = self._pile_viewer.get_view()
-                        v.follow(float(150))
-                        mark = pyrocko.model.Event(t)
-                        v.add_marker(pyrocko.gui_util.EventMarker(mark))
-                        #print mark, a
+                        mark = pile_viewer.Marker(nslcs, t+self._tlast, t+self._tlast)
+                        print mark, a
                         markers.append(mark)
-        '''if len(markers) == 1:
+
+        if len(markers) == 1:
             mark0 = markers[0]
-            mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin, mark0.tmin,  kind=1)
-            mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin, mark0.tmin+swin, kind=2)
+            mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin+self._tlast, mark0.tmin+self._tlast,  kind=1)
+            mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin+self._tlast, mark0.tmin+swin+self._tlast, kind=2)
             markers.extend([mark_l, mark_s])
-        '''
+        
         v = self._pile_viewer.get_view()
         v.follow(float(150))
-        #ev = pyrocko.model.Event(time=time.time())
-        #v.add_marker(pyrocko.gui_util.EventMarker(markers))
 
-        #v.add_markers(markers)
-        '''
-        v = self._pile_viewer.get_view()
-        v.follow(float(follow))
-        ev = pyrocko.model.Event(time=time.time())
-        v.add_marker(pyrocko.gui_util.EventMarker(ev))
-        '''
-
+        v.add_markers(markers)
 #-------------------------------------------------------------------------------------------
 args = sys.argv
 minedemo = MineDemo(args)
