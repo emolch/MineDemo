@@ -110,7 +110,7 @@ class MineDemo(QApplication):
 
         self._win.setCentralWidget(self.frame)
 
-    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=150):
+    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=60):
         self._source_pile = pyrocko.pile.make_pile(['Demodataset.mseed'])
         self._tlast = time.time()
          
@@ -122,8 +122,6 @@ class MineDemo(QApplication):
         
         v = self._pile_viewer.get_view()
         v.follow(float(follow))
-        ev = pyrocko.model.Event(time=time.time())
-        v.add_marker(pyrocko.gui_util.EventMarker(ev))
 
         self._timer = QTimer( self )
         self.connect( self._timer, SIGNAL("timeout()"), self.periodical ) 
@@ -192,8 +190,11 @@ class MineDemo(QApplication):
     '''
     def stalta(self):
         '''Main work routine of the snuffling.'''
-        
+        tnow = time.time() 
         pile = self._source_pile
+
+        tlen = tnow - self._tlast
+        _tmin = pile.tmin + self._tlast % (pile.tmax - pile.tmin)
         tmin, tmax = pile.get_tmin(), pile.get_tmax()
         
         swin, ratio = 0.01, 10
@@ -251,17 +252,19 @@ class MineDemo(QApplication):
                 etr.chop(etr.tmin + lwin, etr.tmax - lwin)
                 tpeaks, apeaks, tzeros = etr.peaks(level, swin*2., deadtime=True)
                 if show_level_traces:
-                    #etr.chop(trace.wmin, trace.wmax)
                     self.add_traces([etr])
 
                 for t, a in zip(tpeaks, apeaks):
-                    print nslcs, util.time_to_str(t)
                     staz=nslcs[0]
-                    if trace.wmin <= t <= trace.wmax:
-                        mark = pile_viewer.Marker(nslcs, t+self._tlast, t+self._tlast)
-                        print mark, a
+                    
+                    wind_start = self._tlast
+                    wind_stop = time.time()+100
+                    
+                    if pile.get_tmin() <= t <= pile.get_tmax():
+                        mark = pile_viewer.Marker(nslcs, t-_tmin+self._tlast, t-_tmin+self._tlast)
                         markers.append(mark)
 
+        print("detection stop")
         if len(markers) == 1:
             mark0 = markers[0]
             mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin+self._tlast, mark0.tmin+self._tlast,  kind=1)
@@ -269,8 +272,6 @@ class MineDemo(QApplication):
             markers.extend([mark_l, mark_s])
         
         v = self._pile_viewer.get_view()
-        v.follow(float(150))
-
         v.add_markers(markers)
 #-------------------------------------------------------------------------------------------
 args = sys.argv
