@@ -10,7 +10,7 @@ from pyrocko import autopick, util, pile_viewer
 class MineDemo(QApplication):
     
     '''
-    This is a demo GUI
+    This is a demo GUI.
     '''
 
 
