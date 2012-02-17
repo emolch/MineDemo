@@ -214,7 +214,7 @@ class MineDemo(QApplication):
             print('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
             show_level_traces = False
         
-        markers = []
+        self.markers = []
         for traces in pile.chopper_grouped(tmin=tmin, tmax=tmax, tinc=tinc, tpad=tpad, want_incomplete=False,
                 gather=lambda tr: tr.nslc_id[:3]):
 
@@ -257,22 +257,26 @@ class MineDemo(QApplication):
                 for t, a in zip(tpeaks, apeaks):
                     staz=nslcs[0]
                     
-                    wind_start = self._tlast
-                    wind_stop = time.time()+100
-                    
-                    if pile.get_tmin() <= t <= pile.get_tmax():
-                        mark = pile_viewer.Marker(nslcs, t-_tmin+self._tlast, t-_tmin+self._tlast)
-                        markers.append(mark)
+                    # Add markers in a time frame tnow-15 Seconds
+                    if (tnow-15<=t-_tmin+self._tlast<= tnow):
+                        
+                        if (pile.get_tmin() <= t <= pile.get_tmax()):
+                         
+                            mark = pile_viewer.Marker(nslcs, t-_tmin+self._tlast, t-_tmin+self._tlast)
+                            self.markers.append(mark)
 
-        print("detection stop")
-        if len(markers) == 1:
-            mark0 = markers[0]
+        if len(self.markers) == 1:
+            mark0 = self.markers[0]
             mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin+self._tlast, mark0.tmin+self._tlast,  kind=1)
             mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin+self._tlast, mark0.tmin+swin+self._tlast, kind=2)
-            markers.extend([mark_l, mark_s])
-        
+            self.markers.extend([mark_l, mark_s])
+        self._timer = QTimer( self )
+        self.connect( self._timer, SIGNAL("timeout()"), self.periodical ) 
+        self._timer.setInterval(4000)
+        self._timer.start()
         v = self._pile_viewer.get_view()
-        v.add_markers(markers)
+        v.add_markers(self.markers)
+         
 #-------------------------------------------------------------------------------------------
 args = sys.argv
 minedemo = MineDemo(args)
