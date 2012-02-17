@@ -42,7 +42,8 @@ class MineDemo(QApplication):
      
             d = scene_data.pop(0)
             item = d['routine'](*d['args'])
-            item.setZValue(d['z'])      # setZValue sets stacking order of items
+            item.setZValue(d['z'])                  # setZValue sets stacking order of items
+            item.setToolTip(Station['Stat_name'])   # mouse moves over item -> Show Stat_name 
 
     def __init__(self, args):
         QApplication.__init__(self, args)
@@ -178,7 +179,7 @@ class MineDemo(QApplication):
         map_canvas.setScene(self.loc_map)
         
         # TEST: add background image with location result
-        bg_loc = QPixmap("images/ruhr1xy_cropped.gif")
+        bg_loc = QPixmap("images/ruhr1xy.gif")
         self.loc_map.addPixmap(bg_loc.scaled(scale_x,scale_y)) # bg_loc.scaled() returns copy.
                                         # how to avoid that?
 
