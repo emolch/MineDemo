@@ -111,6 +111,10 @@ class MineDemo(QApplication):
 
         self._win.setCentralWidget(self.frame)
 
+        self._detectiontimer = QTimer( self )
+        self.connect( self._detectiontimer, SIGNAL("timeout()"), self.stalta ) 
+        self._detectiontimer.setInterval(8000)
+        self._detectiontimer.start()
     def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=60):
         self._source_pile = pyrocko.pile.make_pile(['Demodataset.mseed'])
         self._tlast = time.time()
@@ -258,8 +262,9 @@ class MineDemo(QApplication):
                 for t, a in zip(tpeaks, apeaks):
                     staz=nslcs[0]
                     
-                    # Add markers in a time frame tnow-15 Seconds
-                    if (tnow-15<=t-_tmin+self._tlast<= tnow):
+                    # Add markers in a time frame tnow-11 to tnow-3 Seconds
+                    # This interval looks realistic
+                    if (tnow-11<=t-_tmin+self._tlast<= tnow-3):
                         
                         if (pile.get_tmin() <= t <= pile.get_tmax()):
                          
@@ -271,10 +276,6 @@ class MineDemo(QApplication):
             mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin+self._tlast, mark0.tmin+self._tlast,  kind=1)
             mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin+self._tlast, mark0.tmin+swin+self._tlast, kind=2)
             self.markers.extend([mark_l, mark_s])
-        self._timer = QTimer( self )
-        self.connect( self._timer, SIGNAL("timeout()"), self.periodical ) 
-        self._timer.setInterval(4000)
-        self._timer.start()
         v = self._pile_viewer.get_view()
         v.add_markers(self.markers)
          
