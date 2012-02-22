@@ -91,10 +91,8 @@ class MineDemo(QApplication):
 
         ###
         self.buttonBox = QGroupBox("Applications")
-        
         self.layout = QGridLayout()
-
-        self.frame = QFrame(self._win)
+        #self.frame = QFrame(self._win)
         #self.frame.setLayout(self.layout)
        
         self.start_pile_viewer()
@@ -102,7 +100,7 @@ class MineDemo(QApplication):
         
         #self.layout.addWidget(infotext, 0,0,1,9)
         #self.layout.addWidget(self._pile_viewer, 1,0,1,9)
-        self.layout.addWidget(guititle, 3,0)
+        #self.layout.addWidget(guititle, 3,0)
         self.layout.addWidget(button1, 3,1)
         self.layout.addWidget(button2, 3,2)
         self.layout.addWidget(button3, 3,3)
@@ -120,7 +118,7 @@ class MineDemo(QApplication):
         self.topLayout.addWidget(self._pile_viewer) 
         
         ###
-        #self._win.setCentralWidget(self.frame)
+        self._win.setCentralWidget(self.buttonBox)
         #self._win.setCentralWidget(self.topLayout)
 
         self._detectiontimer = QTimer( self )
@@ -187,7 +185,7 @@ class MineDemo(QApplication):
         scale_x=680
         scale_y=680
         map_canvas = QGraphicsView()
-        self.layout.addWidget(map_canvas,1,0,1,6)
+        self.topLayout.addWidget(map_canvas)
         
         self.loc_map = QGraphicsScene()
         map_canvas.setScene(self.loc_map)
