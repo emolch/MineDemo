@@ -8,7 +8,10 @@ import pyrocko.pile, pyrocko.pile_viewer, pyrocko.hamster_pile
 import pyrocko
 
 class MineDemo(QApplication):
-
+    
+    '''
+    This is a demo GUI
+    '''
 
     def __init__(self, args):
         QApplication.__init__(self, args)
@@ -65,8 +68,8 @@ class MineDemo(QApplication):
 
         self._win.setCentralWidget(self.frame)
 
-    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=120):
-        self._source_pile = pyrocko.pile.make_pile(['demodata.mseed'])
+    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=250):
+        self._source_pile = pyrocko.pile.make_pile(['Demodataset.mseed'])
         self._tlast = time.time()
          
         p = pyrocko.hamster_pile.HamsterPile()
@@ -118,8 +121,11 @@ class MineDemo(QApplication):
         self._pile_viewer.show()
 
     def Location(self):
-        #self.former_widget = self.layout.itemAtPosition(1,0)
-        #print(self.former_widget)
+        '''
+        Activated when clicking the 'Location' button.
+        Shows map with stations (triangles).
+        '''
+
         self._pile_viewer.hide()
         
         x_shift = 20
