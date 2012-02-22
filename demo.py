@@ -204,7 +204,7 @@ class MineDemo(QApplication):
         
         swin, ratio = 0.01, 10
         lwin = swin * ratio
-        self.block_factor=50
+        self.block_factor=8.79
         tinc = min(lwin * self.block_factor, tmax-tmin)
         self.tpad_factor=10
         tpad = lwin*self.tpad_factor
@@ -234,8 +234,8 @@ class MineDemo(QApplication):
                         
                         logger.error('skipping trace %s.%s.%s.%s with unexpected sampling rate' % trace.nslc_id)
                         continue
-                lowpass = 250
-                highpass = 30
+                lowpass = 202
+                highpass = 8
                 trace.lowpass(4, lowpass)
                 trace.highpass(4, highpass)
                  
