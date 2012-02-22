@@ -202,11 +202,11 @@ class MineDemo(QApplication):
         _tmin = pile.tmin + self._tlast % (pile.tmax - pile.tmin)
         tmin, tmax = pile.get_tmin(), pile.get_tmax()
         
-        swin, ratio = 0.01, 10
+        swin, ratio = 0.07, 8
         lwin = swin * ratio
-        self.block_factor=8.79
+        self.block_factor=8.
         tinc = min(lwin * self.block_factor, tmax-tmin)
-        self.tpad_factor=10
+        self.tpad_factor=7.
         tpad = lwin*self.tpad_factor
         ks = 1.0
         kl = 1.8
@@ -234,8 +234,8 @@ class MineDemo(QApplication):
                         
                         logger.error('skipping trace %s.%s.%s.%s with unexpected sampling rate' % trace.nslc_id)
                         continue
-                lowpass = 202
-                highpass = 8
+                lowpass = 20
+                highpass = 1
                 trace.lowpass(4, lowpass)
                 trace.highpass(4, highpass)
                  
@@ -257,8 +257,8 @@ class MineDemo(QApplication):
                 etr.chop(etr.tmin + lwin, etr.tmax - lwin)
                 tpeaks, apeaks, tzeros = etr.peaks(level, swin*2., deadtime=True)
                 if show_level_traces:
-                    self.add_traces([etr])
-
+                    #self._source_pile.add_traces([etr])
+                    pass
                 for t, a in zip(tpeaks, apeaks):
                     staz=nslcs[0]
                     
