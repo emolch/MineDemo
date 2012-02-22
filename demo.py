@@ -67,7 +67,7 @@ class MineDemo(QApplication):
         self.connect(self, SIGNAL('lastWindowClosed()'), self.quit)
         
         button1 = QPushButton('Detection', self._win)
-        self.connect(button1, SIGNAL('clicked()'), self.stalta)
+        self.connect(button1, SIGNAL('clicked()'), self.Detection)
 
         button2 = QPushButton('Location', self._win)
         self.connect(button2, SIGNAL('clicked()'), self.Location)
@@ -88,17 +88,20 @@ class MineDemo(QApplication):
         logogeotech = QLabel('', self._win)
         logogeotech.setPixmap(imagelogogeotech)
         guititle = QLabel('MINE Project GUI Demonstrator', self._win)
+
+        ###
+        self.buttonBox = QGroupBox("Applications")
         
         self.layout = QGridLayout()
-         
+
         self.frame = QFrame(self._win)
-        self.frame.setLayout(self.layout)
+        #self.frame.setLayout(self.layout)
        
         self.start_pile_viewer()
         self._pile_viewer.setParent(self._win)
         
-        self.layout.addWidget(infotext, 0,0,1,9)
-        self.layout.addWidget(self._pile_viewer, 1,0,1,9)
+        #self.layout.addWidget(infotext, 0,0,1,9)
+        #self.layout.addWidget(self._pile_viewer, 1,0,1,9)
         self.layout.addWidget(guititle, 3,0)
         self.layout.addWidget(button1, 3,1)
         self.layout.addWidget(button2, 3,2)
@@ -108,14 +111,23 @@ class MineDemo(QApplication):
         self.layout.addWidget(button6, 3,6)
         self.layout.addWidget(logomine, 3,7)
         self.layout.addWidget(logogeotech, 3,8)
-
-        self._win.setCentralWidget(self.frame)
+        
+        ###
+        self.buttonBox.setLayout(self.layout)
+        
+        ###
+        self.topLayout = QStackedLayout()
+        self.topLayout.addWidget(self._pile_viewer) 
+        
+        ###
+        #self._win.setCentralWidget(self.frame)
+        #self._win.setCentralWidget(self.topLayout)
 
         self._detectiontimer = QTimer( self )
         self.connect( self._detectiontimer, SIGNAL("timeout()"), self.stalta ) 
         self._detectiontimer.setInterval(8000)
         self._detectiontimer.start()
-    def start_pile_viewer(self, ntracks=5, use_opengl=False, panel_parent=None, follow=60):
+    def start_pile_viewer(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
         self._source_pile = pyrocko.pile.make_pile(['Demodataset.mseed'])
         self._tlast = time.time()
          
