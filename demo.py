@@ -181,13 +181,19 @@ class LocationWidget(QGraphicsView):
         self.loc_map = QGraphicsScene()
         self.setScene(self.loc_map)
         
-        # TEST: add background image with location result
-        bg_loc = QPixmap("images/ruhr1xy.gif")
-        self.loc_map.addPixmap(bg_loc.scaled(scale_x,scale_y)) # bg_loc.scaled() returns copy.
-                                        # how to avoid that?
+        self.image_item = None
 
     def setStations(self, stations):
         self._stations = stations
+
+    def setImage(self, event_no):
+        # TEST: add background image with location result
+        if self.image_item:
+            self.loc_map.removeItem(self.image_item)
+
+        bg_loc = QPixmap("images/ruhr%ixy.gif" % event_no)
+        self.image_item = self.loc_map.addPixmap(bg_loc) # bg_loc.scaled() returns copy.
+                                        # how to avoid that?
 
     def addStations(self,Station_Dict,Canvas,scale_x=400,scale_y=400):
         '''
@@ -290,6 +296,11 @@ class MineDemo(QApplication):
 
             container.addWidget(widget)
             self.connect(button, SIGNAL('clicked()'), stacked_widget_setter(container, widget))
+
+        def setimage():
+            locationWidget.setImage(1)
+
+        self.connect(button4, SIGNAL('clicked()'), setimage)
 
         self._win.setCentralWidget(frame)
         #self._win.setCentralWidget(self.topLayout)
