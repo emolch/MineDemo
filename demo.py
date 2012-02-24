@@ -26,6 +26,15 @@ def load_stations(fn):
         stations.append(s)
     return stations
 
+class eventTimer(QTimer):
+       
+    def __init__(self):
+        timetable = [(1,5),(2,20),(3,36),(4,50),(5,50)]
+
+    def update(self,t):
+        self._tstart = t
+
+        
 class TracesWidget(pile_viewer.PileViewer):
 
     def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
@@ -36,6 +45,7 @@ class TracesWidget(pile_viewer.PileViewer):
                 use_opengl=use_opengl, panel_parent=panel_parent)
 
         self._tlast = time.time()
+        self._tmin = source_pile.tmin + self._tlast % (source_pile.tmax - source_pile.tmin)
         
         v = self.get_view()
         v.follow(float(follow))
@@ -56,9 +66,11 @@ class TracesWidget(pile_viewer.PileViewer):
     def periodical(self):
         source_pile = self._source_pile
         tnow = time.time()
+        
         tlen = tnow - self._tlast
 
         tmin = source_pile.tmin + self._tlast % (source_pile.tmax - source_pile.tmin)
+        self._tmin = tmin
         tmax = tmin + tlen 
 
         def shiftinsert(tmin, tmax, tdelay):
@@ -77,9 +89,8 @@ class TracesWidget(pile_viewer.PileViewer):
         self._tlast = tnow
 
     def stalta(self):
-        ''' Based on stalta by Francesco Grigoli.
-        All values are preliminary. 
-        TODO: Add button: "change LTASTA parameters --> snufflings' panel will open
+        ''' 
+        Based on stalta by Francesco Grigoli.
         '''
 
         tnow = time.time() 
@@ -150,7 +161,6 @@ class TracesWidget(pile_viewer.PileViewer):
                     staz=nslcs[0]
                     
                     # Add markers in a time frame tnow-11 to tnow-3 Seconds
-                    # This interval looks realistic
                     if (tnow-11<=t-_tmin+self._tlast<= tnow-3):
                         
                         if (pile.get_tmin() <= t <= pile.get_tmax()):
@@ -166,6 +176,9 @@ class TracesWidget(pile_viewer.PileViewer):
         v = self.get_view()
         v.add_markers(self.markers)
 
+    def giveTraceStart(self):
+        return self._tmin
+    
 class LocationWidget(QGraphicsView):
     def __init__(self):
         QGraphicsView.__init__(self)
@@ -182,7 +195,7 @@ class LocationWidget(QGraphicsView):
         self.setScene(self.loc_map)
         
         self.image_item = None
-
+        
     def setStations(self, stations):
         self._stations = stations
 
@@ -192,8 +205,7 @@ class LocationWidget(QGraphicsView):
             self.loc_map.removeItem(self.image_item)
 
         bg_loc = QPixmap("images/ruhr%ixy.gif" % event_no)
-        self.image_item = self.loc_map.addPixmap(bg_loc) # bg_loc.scaled() returns copy.
-                                        # how to avoid that?
+        self.image_item = self.loc_map.addPixmap(bg_loc) 
 
     def addStations(self,Station_Dict,Canvas,scale_x=400,scale_y=400):
         '''
@@ -233,8 +245,10 @@ class MineDemo(QApplication):
     '''
     
     def __init__(self, args):
+       
+        _eventtimer = eventTimer()
+
         QApplication.__init__(self, args)
-        
         
         # read station's data and store to dictionary:
 
@@ -266,7 +280,6 @@ class MineDemo(QApplication):
         logogeotech.setPixmap(imagelogogeotech)
         guititle = QLabel('MINE Project GUI Demonstrator', self._win)
 
-        ###
         frame = QFrame()
         layout = QGridLayout()
         frame.setLayout(layout)
@@ -275,11 +288,12 @@ class MineDemo(QApplication):
         locationWidget = LocationWidget()
         plotWidget = gui_util.PyLab()
         
+        _eventtimer.update(tracesWidget.giveTraceStart())
         container = QStackedWidget()
 
-        #layout.addWidget(infotext, 0,0,1,9)
+        layout.addWidget(infotext, 0,0,1,9)
         layout.addWidget(container, 1,0,1,9)
-        #layout.addWidget(guititle, 3,0)
+        layout.addWidget(guititle, 3,0)
         layout.addWidget(button1, 3,1)
         layout.addWidget(button2, 3,2)
         layout.addWidget(button3, 3,3)
@@ -289,6 +303,11 @@ class MineDemo(QApplication):
         layout.addWidget(logomine, 3,7)
         layout.addWidget(logogeotech, 3,8)
        
+        def setimage():
+            locationWidget.setImage(1)
+
+        setimage()
+
         for button, widget in [ 
                 (button1, tracesWidget), 
                 (button2, locationWidget),
@@ -297,15 +316,7 @@ class MineDemo(QApplication):
             container.addWidget(widget)
             self.connect(button, SIGNAL('clicked()'), stacked_widget_setter(container, widget))
 
-        def setimage():
-            locationWidget.setImage(1)
-
-        self.connect(button4, SIGNAL('clicked()'), setimage)
-
         self._win.setCentralWidget(frame)
-        #self._win.setCentralWidget(self.topLayout)
-
-
         
          
 #-------------------------------------------------------------------------------------------
