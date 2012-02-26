@@ -29,12 +29,28 @@ def load_stations(fn):
 class eventTimer(QTimer):
        
     def __init__(self):
-        timetable = [(1,5),(2,20),(3,36),(4,50),(5,50)]
+        QTimer.__init__(self)
+        self._timetable = [(1,5),(2,20),(3,36),(4,50),(5,50)]
+        self._tmp = [1,3,4,5]       
+        self.out=1
+        self._eventID = 0
+    #def startTimer(self):
+        self._timeevents= QTimer( self )
+        self.connect( self._timeevents, SIGNAL("timeout()"), self.nextEvent) 
+        self._timeevents.setInterval(2000)
+        self._timeevents.start()
 
-    def update(self,t):
-        self._tstart = t
+    def nextEvent(self):
+        self.out = self._tmp[self._eventID]
+        self._eventID = (self._eventID + 1)%4
 
-        
+        print "next", self.out
+        return self.out
+
+    def getEvent(self):
+        print self.out
+        return self.out
+
 class TracesWidget(pile_viewer.PileViewer):
 
     def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
@@ -246,10 +262,11 @@ class MineDemo(QApplication):
     
     def __init__(self, args):
        
-        _eventtimer = eventTimer()
-
         QApplication.__init__(self, args)
         
+        self._eventtimer = eventTimer()
+        #_eventtimer.startTimer()
+
         # read station's data and store to dictionary:
 
         self._stations = load_stations('Stations.dat')
@@ -288,7 +305,6 @@ class MineDemo(QApplication):
         locationWidget = LocationWidget()
         plotWidget = gui_util.PyLab()
         
-        _eventtimer.update(tracesWidget.giveTraceStart())
         container = QStackedWidget()
 
         layout.addWidget(infotext, 0,0,1,9)
@@ -304,7 +320,7 @@ class MineDemo(QApplication):
         layout.addWidget(logogeotech, 3,8)
        
         def setimage():
-            locationWidget.setImage(1)
+            locationWidget.setImage(self._eventtimer.getEvent())
 
         setimage()
 
