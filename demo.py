@@ -13,6 +13,13 @@ def stacked_widget_setter(stackwidget, widget):
     
     return setit
 
+def image_setter(Eventnumber,widget):
+
+    def setit():
+        widget.setImage(Eventnumber)
+        print "is",Eventnumber
+    return setit
+
 def load_stations(fn):
     f = open(fn,'r')
     stations = []
@@ -34,23 +41,22 @@ class eventTimer(QTimer):
         self._tmp = [1,3,4,5]       
         self.out=1
         self._eventID = 0
-    #def startTimer(self):
+        
         self._timeevents= QTimer( self )
         self.connect( self._timeevents, SIGNAL("timeout()"), self.nextEvent) 
+        #self.connect( self._timeevents, SIGNAL("timeout()"), self.keepUpdated)
         self._timeevents.setInterval(2000)
         self._timeevents.start()
 
     def nextEvent(self):
         self.out = self._tmp[self._eventID]
         self._eventID = (self._eventID + 1)%4
-
-        print "next", self.out
-        return self.out
-
-    def getEvent(self):
         print self.out
         return self.out
 
+    def getEvent(self):
+        return self.out
+    
 class TracesWidget(pile_viewer.PileViewer):
 
     def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
@@ -231,9 +237,6 @@ class LocationWidget(QGraphicsView):
         @param scale_x give an x-scale value according to canvas size
         @param scale_y give an y-scale value according to canvas size
         '''
-        #!!!!!!!!!!!!!!!!!!!!!!!!!
-        # position probably incorrect?
-        #!!!!!!!!!!!!!!!!!!!!!!!!!
         
         dash_pen = QPen(QColor("black"))
         b_brush = QBrush(QColor("black"))
@@ -241,9 +244,12 @@ class LocationWidget(QGraphicsView):
         # Add station after station to map_canvas:
         for Station in Station_Dict:
             triangle = QPolygonF()
-            triangle.append(QPointF(10+(float(Station['Stat_x']))*scale_x,-10+(float(Station['Stat_y'])*scale_y)))
-            triangle.append(QPointF(0 +(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
-            triangle.append(QPointF(20+(float(Station['Stat_x']))*scale_x, 5 +(float(Station['Stat_y'])*scale_y)))
+            triangle.append(QPointF(10+(float(Station['Stat_x']))*scale_x,
+                                -10+(float(Station['Stat_y'])*scale_y)))
+            triangle.append(QPointF(0 +(float(Station['Stat_x']))*scale_x,
+                                5 +(float(Station['Stat_y'])*scale_y)))
+            triangle.append(QPointF(20+(float(Station['Stat_x']))*scale_x,
+                                5 +(float(Station['Stat_y'])*scale_y)))
             scene_data = []
             scene_data.append({'routine':Canvas.addPolygon,
                                     'z':1,
@@ -265,10 +271,7 @@ class MineDemo(QApplication):
         QApplication.__init__(self, args)
         
         self._eventtimer = eventTimer()
-        #_eventtimer.startTimer()
-
         # read station's data and store to dictionary:
-
         self._stations = load_stations('Stations.dat')
         
         self._win = QMainWindow()
@@ -302,9 +305,9 @@ class MineDemo(QApplication):
         frame.setLayout(layout)
 
         tracesWidget = TracesWidget()
-        locationWidget = LocationWidget()
+        self.locationWidget = LocationWidget()
         plotWidget = gui_util.PyLab()
-        
+
         container = QStackedWidget()
 
         layout.addWidget(infotext, 0,0,1,9)
@@ -319,23 +322,26 @@ class MineDemo(QApplication):
         layout.addWidget(logomine, 3,7)
         layout.addWidget(logogeotech, 3,8)
        
-        def setimage():
-            locationWidget.setImage(self._eventtimer.getEvent())
-
-        setimage()
-
+#        def setimage():
+#            locationWidget.setImage(self._eventtimer.getEvent())
+#
+        #setimage()
         for button, widget in [ 
                 (button1, tracesWidget), 
-                (button2, locationWidget),
+                (button2, self.locationWidget),
                 (button3, plotWidget) ]:
 
             container.addWidget(widget)
-            self.connect(button, SIGNAL('clicked()'), stacked_widget_setter(container, widget))
+            self.connect(button, SIGNAL('clicked()'), 
+                    image_setter(self._eventtimer.getEvent(),widget))
+            self.connect(button, SIGNAL('clicked()'), 
+                    stacked_widget_setter(container, widget))
+        
 
         self._win.setCentralWidget(frame)
         
          
-#-------------------------------------------------------------------------------------------
+#---------------------------------------------------------------------------
 args = sys.argv
 minedemo = MineDemo(args)
 minedemo.exec_()
