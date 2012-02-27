@@ -183,7 +183,6 @@ class LocationWidget(QGraphicsView):
     def __init__(self):
         QGraphicsView.__init__(self)
 
-
         #create canvas for overview map and add to layout:
         scale_x=680
         scale_y=680
@@ -241,14 +240,23 @@ class LocationWidget(QGraphicsView):
             item.setZValue(d['z'])                  # setZValue sets stacking order of items
             item.setToolTip(Station['Stat_name'])   # mouse moves over item -> Show Stat_name 
 
+class Statistics(QGraphicsView):
+    def __init__(self):
+        QGraphicsView.__init__(self)
+
+        self.statisticsScene = QGraphicsScene()
+        self.setScene(self.statisticsScene)
+        self.imageStatistics = QPixmap("./images/Statistics.jpg")
+        self.image_item = self.statisticsScene.addPixmap(self.imageStatistics) 
+
+
 class FocalMechanism(QGraphicsView):
     def __init__(self):
         QGraphicsView.__init__(self)
 
         self.foc_mec = QGraphicsScene()
         self.setScene(self.foc_mec)
-        self.imageFocMec = QPixmap("./images/figure5_cropped_rotated.jpg")
-        #foc_mec.setPixmap(imageFocMec)
+        self.imageFocMec = QPixmap("./images/focalmechanisms.jpg")
         self.image_item = self.foc_mec.addPixmap(self.imageFocMec) 
         
 
@@ -297,7 +305,8 @@ class MineDemo(QApplication):
 
         tracesWidget = TracesWidget()
         locationWidget = LocationWidget()
-        focalMechanism = FocalMechanism()
+        focalMechanismWidget = FocalMechanism()
+        statisticsWidget = Statistics()
         plotWidget = gui_util.PyLab()
 
         container = QStackedWidget()
@@ -317,8 +326,8 @@ class MineDemo(QApplication):
         for button, widget in [ 
                 (button1, tracesWidget), 
                 (button2, locationWidget),
-                (button4, plotWidget),
-                (button3, focalMechanism) ]:
+                (button3, focalMechanismWidget), 
+                (button4, statisticsWidget) ]:
                 
             container.addWidget(widget)
             self.connect(button, SIGNAL('clicked()'), 
