@@ -51,7 +51,6 @@ class eventTimer(QTimer):
     def nextEvent(self):
         self.out = self._tmp[self._eventID]
         self._eventID = (self._eventID + 1)%4
-        print self.out
         return self.out
 
     def getEvent(self):
@@ -212,22 +211,36 @@ class LocationWidget(QGraphicsView):
         #create canvas for overview map and add to layout:
         scale_x=680
         scale_y=680
+        self._imagetimer = QTimer( self )
+        self.connect( self._imagetimer, SIGNAL("timeout()"), self.findImage)
+        #self.connect( self._timeevents, SIGNAL("timeout()"), self.keepUpdated)
+        self._imagetimer.setInterval(2000)
+        self._imagetimer.start()
         
         self.loc_map = QGraphicsScene()
         self.setScene(self.loc_map)
         
         self.image_item = None
         
+        self.image_item = self.loc_map.addPixmap(QPixmap("images/ruhr3xy.gif")) 
+
     def setStations(self, stations):
         self._stations = stations
+    
+    def findImage(self):
+        event_no = int(time.time()%5)
+        self._image = QPixmap("images/ruhr%ixy.gif" % event_no)
 
-    def setImage(self, event_no):
+    def setImage(self):
         # TEST: add background image with location result
         if self.image_item:
             self.loc_map.removeItem(self.image_item)
 
-        bg_loc = QPixmap("images/ruhr%ixy.gif" % event_no)
-        self.image_item = self.loc_map.addPixmap(bg_loc) 
+        #image = event_no
+        #bg_loc = QPixmap("images/ruhr%ixy.gif" % event_no)
+#        bg_loc = QPixmap(image)
+        #self.image_item = self.loc_map.addPixmap(bg_loc) 
+        self.image_item = self.loc_map.addPixmap(self._image) 
 
     def addStations(self,Station_Dict,Canvas,scale_x=400,scale_y=400):
         '''
@@ -305,7 +318,7 @@ class MineDemo(QApplication):
         frame.setLayout(layout)
 
         tracesWidget = TracesWidget()
-        self.locationWidget = LocationWidget()
+        locationWidget = LocationWidget()
         plotWidget = gui_util.PyLab()
 
         container = QStackedWidget()
@@ -328,12 +341,12 @@ class MineDemo(QApplication):
         #setimage()
         for button, widget in [ 
                 (button1, tracesWidget), 
-                (button2, self.locationWidget),
+                (button2, locationWidget),
                 (button3, plotWidget) ]:
 
             container.addWidget(widget)
             self.connect(button, SIGNAL('clicked()'), 
-                    image_setter(self._eventtimer.getEvent(),widget))
+                    locationWidget.setImage)
             self.connect(button, SIGNAL('clicked()'), 
                     stacked_widget_setter(container, widget))
         
