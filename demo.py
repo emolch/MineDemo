@@ -13,13 +13,6 @@ def stacked_widget_setter(stackwidget, widget):
     
     return setit
 
-def image_setter(Eventnumber,widget):
-
-    def setit():
-        widget.setImage(Eventnumber)
-        print "is",Eventnumber
-    return setit
-
 def load_stations(fn):
     f = open(fn,'r')
     stations = []
@@ -33,29 +26,6 @@ def load_stations(fn):
         stations.append(s)
     return stations
 
-class eventTimer(QTimer):
-       
-    def __init__(self):
-        QTimer.__init__(self)
-        self._timetable = [(1,5),(2,20),(3,36),(4,50),(5,50)]
-        self._tmp = [1,3,4,5]       
-        self.out=1
-        self._eventID = 0
-        
-        self._timeevents= QTimer( self )
-        self.connect( self._timeevents, SIGNAL("timeout()"), self.nextEvent) 
-        #self.connect( self._timeevents, SIGNAL("timeout()"), self.keepUpdated)
-        self._timeevents.setInterval(2000)
-        self._timeevents.start()
-
-    def nextEvent(self):
-        self.out = self._tmp[self._eventID]
-        self._eventID = (self._eventID + 1)%4
-        return self.out
-
-    def getEvent(self):
-        return self.out
-    
 class TracesWidget(pile_viewer.PileViewer):
 
     def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
@@ -132,6 +102,7 @@ class TracesWidget(pile_viewer.PileViewer):
         kd = 0.
         level = 6.0
 
+        _numMarkers = 0
         show_level_traces = True
         if show_level_traces and tmax-tmin > lwin * 150:
             
@@ -195,11 +166,12 @@ class TracesWidget(pile_viewer.PileViewer):
             mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin+self._tlast, mark0.tmin+swin+self._tlast, kind=2)
             self.markers.extend([mark_l, mark_s])
         v = self.get_view()
+        _numMarkers+=len(self.markers)
+        print _numMarkers
+        if _numMarkers>=10:
+            self.emit(SIGNAL('valueChanged(int)'),_numMarkers)
         v.add_markers(self.markers)
 
-    def giveTraceStart(self):
-        return self._tmin
-    
 class LocationWidget(QGraphicsView):
     def __init__(self):
         QGraphicsView.__init__(self)
@@ -211,17 +183,13 @@ class LocationWidget(QGraphicsView):
         #create canvas for overview map and add to layout:
         scale_x=680
         scale_y=680
-        self._imagetimer = QTimer( self )
-        self.connect( self._imagetimer, SIGNAL("timeout()"), self.findImage)
-        #self.connect( self._timeevents, SIGNAL("timeout()"), self.keepUpdated)
-        self._imagetimer.setInterval(2000)
-        self._imagetimer.start()
         
         self.loc_map = QGraphicsScene()
         self.setScene(self.loc_map)
         
         self.image_item = None
         
+        self._image = QPixmap("images/ruhr%ixy.gif" % 4)
         self.image_item = self.loc_map.addPixmap(QPixmap("images/ruhr3xy.gif")) 
 
     def setStations(self, stations):
@@ -236,10 +204,6 @@ class LocationWidget(QGraphicsView):
         if self.image_item:
             self.loc_map.removeItem(self.image_item)
 
-        #image = event_no
-        #bg_loc = QPixmap("images/ruhr%ixy.gif" % event_no)
-#        bg_loc = QPixmap(image)
-        #self.image_item = self.loc_map.addPixmap(bg_loc) 
         self.image_item = self.loc_map.addPixmap(self._image) 
 
     def addStations(self,Station_Dict,Canvas,scale_x=400,scale_y=400):
@@ -283,7 +247,6 @@ class MineDemo(QApplication):
        
         QApplication.__init__(self, args)
         
-        self._eventtimer = eventTimer()
         # read station's data and store to dictionary:
         self._stations = load_stations('Stations.dat')
         
@@ -335,10 +298,6 @@ class MineDemo(QApplication):
         layout.addWidget(logomine, 3,7)
         layout.addWidget(logogeotech, 3,8)
        
-#        def setimage():
-#            locationWidget.setImage(self._eventtimer.getEvent())
-#
-        #setimage()
         for button, widget in [ 
                 (button1, tracesWidget), 
                 (button2, locationWidget),
@@ -350,8 +309,9 @@ class MineDemo(QApplication):
             self.connect(button, SIGNAL('clicked()'), 
                     stacked_widget_setter(container, widget))
         
-
+        
         self._win.setCentralWidget(frame)
+        self.connect(tracesWidget, SIGNAL('valueChanged(int)'),locationWidget.findImage)
         
          
 #---------------------------------------------------------------------------
