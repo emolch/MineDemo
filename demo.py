@@ -26,6 +26,7 @@ def load_stations(fn):
         stations.append(s)
     return stations
 
+
 class TracesWidget(pile_viewer.PileViewer):
 
     def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
@@ -149,6 +150,7 @@ class TracesWidget(pile_viewer.PileViewer):
                 if show_level_traces:
                     #self._source_pile.add_traces([etr])
                     pass
+
                 for t, a in zip(tpeaks, apeaks):
                     staz=nslcs[0]
                     
@@ -167,18 +169,20 @@ class TracesWidget(pile_viewer.PileViewer):
             self.markers.extend([mark_l, mark_s])
         v = self.get_view()
         _numMarkers+=len(self.markers)
-        print _numMarkers
+        
+        # emit signal, when Event was detected:
         if _numMarkers>=10:
             self.emit(SIGNAL('valueChanged(int)'),_numMarkers)
         v.add_markers(self.markers)
 
+
 class LocationWidget(QGraphicsView):
+    '''
+    Shows map with stations (triangles).
+    '''
     def __init__(self):
         QGraphicsView.__init__(self)
 
-        '''
-        Shows map with stations (triangles).
-        '''
 
         #create canvas for overview map and add to layout:
         scale_x=680
@@ -237,6 +241,17 @@ class LocationWidget(QGraphicsView):
             item.setZValue(d['z'])                  # setZValue sets stacking order of items
             item.setToolTip(Station['Stat_name'])   # mouse moves over item -> Show Stat_name 
 
+class FocalMechanism(QGraphicsView):
+    def __init__(self):
+        QGraphicsView.__init__(self)
+
+        self.foc_mec = QGraphicsScene()
+        self.setScene(self.foc_mec)
+        self.imageFocMec = QPixmap("./images/figure5_cropped_rotated.jpg")
+        #foc_mec.setPixmap(imageFocMec)
+        self.image_item = self.foc_mec.addPixmap(self.imageFocMec) 
+        
+
 class MineDemo(QApplication):
     
     '''
@@ -282,6 +297,7 @@ class MineDemo(QApplication):
 
         tracesWidget = TracesWidget()
         locationWidget = LocationWidget()
+        focalMechanism = FocalMechanism()
         plotWidget = gui_util.PyLab()
 
         container = QStackedWidget()
@@ -301,8 +317,9 @@ class MineDemo(QApplication):
         for button, widget in [ 
                 (button1, tracesWidget), 
                 (button2, locationWidget),
-                (button3, plotWidget) ]:
-
+                (button4, plotWidget),
+                (button3, focalMechanism) ]:
+                
             container.addWidget(widget)
             self.connect(button, SIGNAL('clicked()'), 
                     locationWidget.setImage)
