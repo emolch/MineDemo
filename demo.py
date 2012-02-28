@@ -260,6 +260,15 @@ class FocalMechanism(QGraphicsView):
         self.image_item = self.foc_mec.addPixmap(self.imageFocMec) 
         
 
+class Tomographie(QGraphicsView):
+    def __init__(self):
+        QGraphicsView.__init__(self)
+
+        self.tomographieScene = QGraphicsScene()
+        self.setScene(self.tomographieScene)
+        self.imageTomographie = QPixmap("./images/figure3dbis.jpg")
+        self.image_item = self.tomographieScene.addPixmap(self.imageTomographie)
+
 class MineDemo(QApplication):
     
     '''
@@ -307,6 +316,7 @@ class MineDemo(QApplication):
         locationWidget = LocationWidget()
         focalMechanismWidget = FocalMechanism()
         statisticsWidget = Statistics()
+        tomographieWidget = Tomographie()
         plotWidget = gui_util.PyLab()
 
         container = QStackedWidget()
@@ -327,16 +337,17 @@ class MineDemo(QApplication):
                 (button1, tracesWidget), 
                 (button2, locationWidget),
                 (button3, focalMechanismWidget), 
-                (button4, statisticsWidget) ]:
-                
+                (button4, statisticsWidget),
+                (button5, tomographieWidget) ]:        
             container.addWidget(widget)
-            self.connect(button, SIGNAL('clicked()'), 
-                    locationWidget.setImage)
+            #self.connect(button, SIGNAL('clicked()'), 
+            #        locationWidget.setImage)
             self.connect(button, SIGNAL('clicked()'), 
                     stacked_widget_setter(container, widget))
         
         
         self._win.setCentralWidget(frame)
+        self.connect(tracesWidget, SIGNAL('valueChanged(int)'),locationWidget.setImage)
         self.connect(tracesWidget, SIGNAL('valueChanged(int)'),locationWidget.findImage)
         
          
