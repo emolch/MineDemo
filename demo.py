@@ -193,7 +193,7 @@ class LocationWidget(QGraphicsView):
         self._image = QPixmap("images/ruhr%ixy.jpg" % 1)
 
         self.scaledImage = self._image.scaled(
-                QSize(self.width(),self.height()))
+                QSize(self.width(),self.height()),Qt.KeepAspectRatioByExpanding)
         
         self.image_item = self.loc_map.addPixmap(QPixmap(self.scaledImage)) 
         
@@ -213,7 +213,7 @@ class LocationWidget(QGraphicsView):
             self.loc_map.removeItem(self.image_item)
 
         self.scaledImage = self._image.scaled(
-                QSize(self.width(),self.height()))
+                QSize(self.width(),self.height()),Qt.KeepAspectRatioByExpanding)
         
         self.image_item = self.loc_map.addPixmap(self.scaledImage) 
         
@@ -256,8 +256,8 @@ class Statistics(QGraphicsView):
         self.statisticsScene = QGraphicsScene()
         self.setScene(self.statisticsScene)
         self.imageStatistics = QPixmap("./images/Statistics.jpg")
-        self.scaledImage = self.imageStatistics.scaled(
-                QSize(self.width(),self.height()))
+        self.scaledImage = self.imageStatistics.scaled(QSize(self.width(),self.height()),Qt.KeepAspectRatioByExpanding)
+        
         self.image_item = self.statisticsScene.addPixmap(self.scaledImage) 
 
 
@@ -279,7 +279,7 @@ class Tomographie(QGraphicsView):
         self.setScene(self.tomographieScene)
         self.imageTomographie = QPixmap("./images/figure3dbis.jpg")
         self.scaledImage = self.imageTomographie.scaled(
-                QSize(self.width(),self.height()))
+                QSize(self.width(),self.height()),Qt.KeepAspectRatioByExpanding)
         self.image_item = self.tomographieScene.addPixmap(self.scaledImage)
 
 class MineDemo(QApplication):
