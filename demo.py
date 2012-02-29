@@ -30,7 +30,7 @@ def load_stations(fn):
 class TracesWidget(pile_viewer.PileViewer):
 
     def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
-        source_pile = pile.make_pile(['Demodataset.mseed'])
+        source_pile = pile.make_pile(['Demodataset_new.mseed'])
         p = hamster_pile.HamsterPile()
         p.set_fixation_length(20.)
         pile_viewer.PileViewer.__init__(self, p, ntracks_shown_max=ntracks,
@@ -97,7 +97,8 @@ class TracesWidget(pile_viewer.PileViewer):
         self.block_factor=8.
         tinc = min(lwin * self.block_factor, tmax-tmin)
         self.tpad_factor=7.
-        tpad = lwin*self.tpad_factor
+#        tpad = lwin*self.tpad_factor
+        tpad = 15.0
         ks = 1.0
         kl = 1.8
         kd = 0.
@@ -155,7 +156,7 @@ class TracesWidget(pile_viewer.PileViewer):
                     staz=nslcs[0]
                     
                     # Add markers in a time frame tnow-11 to tnow-3 Seconds
-                    if (tnow-11<=t-_tmin+self._tlast<= tnow-3):
+                    if (tnow-10<=t-_tmin+self._tlast<= tnow-1):
                         
                         if (pile.get_tmin() <= t <= pile.get_tmax()):
                          
@@ -203,7 +204,6 @@ class LocationWidget(QGraphicsView):
         self._stations = stations
     
     def setImage(self):
-        # TEST: add background image with location result
         
         self.events = [1,3,4]
         
@@ -218,6 +218,7 @@ class LocationWidget(QGraphicsView):
         self.image_item = self.loc_map.addPixmap(self.scaledImage) 
         
         self.indx += 1
+
     def addStations(self,Station_Dict,Canvas,scale_x=400,scale_y=400):
         '''
         Adds stations (triangles) to map.
