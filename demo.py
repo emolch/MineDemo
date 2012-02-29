@@ -184,31 +184,40 @@ class LocationWidget(QGraphicsView):
         QGraphicsView.__init__(self)
 
         #create canvas for overview map and add to layout:
-        scale_x=680
-        scale_y=680
         
         self.loc_map = QGraphicsScene()
         self.setScene(self.loc_map)
         
         self.image_item = None
         
-        self._image = QPixmap("images/ruhr%ixy.gif" % 4)
-        self.image_item = self.loc_map.addPixmap(QPixmap("images/ruhr3xy.gif")) 
+        self._image = QPixmap("images/ruhr%ixy.jpg" % 1)
+
+        self.scaledImage = self._image.scaled(
+                QSize(self.width(),self.height()))
+        
+        self.image_item = self.loc_map.addPixmap(QPixmap(self.scaledImage)) 
+        
+        self.indx = 0
 
     def setStations(self, stations):
         self._stations = stations
     
-    def findImage(self):
-        event_no = int(time.time()%5)
-        self._image = QPixmap("images/ruhr%ixy.gif" % event_no)
-
     def setImage(self):
         # TEST: add background image with location result
+        
+        self.events = [1,3,4]
+        
+        self._image = QPixmap("images/ruhr%ixy.jpg" % self.events[self.indx%3])
+        
         if self.image_item:
             self.loc_map.removeItem(self.image_item)
 
-        self.image_item = self.loc_map.addPixmap(self._image) 
-
+        self.scaledImage = self._image.scaled(
+                QSize(self.width(),self.height()))
+        
+        self.image_item = self.loc_map.addPixmap(self.scaledImage) 
+        
+        self.indx += 1
     def addStations(self,Station_Dict,Canvas,scale_x=400,scale_y=400):
         '''
         Adds stations (triangles) to map.
@@ -247,7 +256,9 @@ class Statistics(QGraphicsView):
         self.statisticsScene = QGraphicsScene()
         self.setScene(self.statisticsScene)
         self.imageStatistics = QPixmap("./images/Statistics.jpg")
-        self.image_item = self.statisticsScene.addPixmap(self.imageStatistics) 
+        self.scaledImage = self.imageStatistics.scaled(
+                QSize(self.width(),self.height()))
+        self.image_item = self.statisticsScene.addPixmap(self.scaledImage) 
 
 
 class FocalMechanism(QGraphicsView):
@@ -267,7 +278,9 @@ class Tomographie(QGraphicsView):
         self.tomographieScene = QGraphicsScene()
         self.setScene(self.tomographieScene)
         self.imageTomographie = QPixmap("./images/figure3dbis.jpg")
-        self.image_item = self.tomographieScene.addPixmap(self.imageTomographie)
+        self.scaledImage = self.imageTomographie.scaled(
+                QSize(self.width(),self.height()))
+        self.image_item = self.tomographieScene.addPixmap(self.scaledImage)
 
 class MineDemo(QApplication):
     
@@ -340,16 +353,11 @@ class MineDemo(QApplication):
                 (button4, statisticsWidget),
                 (button5, tomographieWidget) ]:        
             container.addWidget(widget)
-            #self.connect(button, SIGNAL('clicked()'), 
-            #        locationWidget.setImage)
             self.connect(button, SIGNAL('clicked()'), 
                     stacked_widget_setter(container, widget))
         
-        
         self._win.setCentralWidget(frame)
         self.connect(tracesWidget, SIGNAL('valueChanged(int)'),locationWidget.setImage)
-        self.connect(tracesWidget, SIGNAL('valueChanged(int)'),locationWidget.findImage)
-        
          
 #---------------------------------------------------------------------------
 args = sys.argv
