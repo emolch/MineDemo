@@ -14,6 +14,7 @@ def stacked_widget_setter(stackwidget, widget):
     return setit
 
 def load_stations(fn):
+
     f = open(fn,'r')
     stations = []
     for line in f:
@@ -97,7 +98,6 @@ class TracesWidget(pile_viewer.PileViewer):
         self.block_factor=8.
         tinc = min(lwin * self.block_factor, tmax-tmin)
         self.tpad_factor=7.
-#        tpad = lwin*self.tpad_factor
         tpad = 15.0
         ks = 1.0
         kl = 1.8
@@ -191,12 +191,12 @@ class LocationWidget(QGraphicsView):
         
         self.image_item = None
         
-        self._image = QPixmap("images/ruhr%ixy.jpg" % 1)
+        #self._image = QPixmap("images/ruhr%ixy.jpg" % 1)
 
-        self.scaledImage = self._image.scaled(
-                QSize(self.width(),self.height()),Qt.KeepAspectRatioByExpanding)
+        #self.scaledImage = self._image.scaled(
+        #        QSize(self.width(),self.height()),Qt.KeepAspectRatioByExpanding)
         
-        self.image_item = self.loc_map.addPixmap(QPixmap(self.scaledImage)) 
+        #self.image_item = self.loc_map.addPixmap(QPixmap(self.scaledImage)) 
         
         self.indx = 0
 
@@ -262,6 +262,7 @@ class Statistics(QGraphicsView):
         self.image_item = self.statisticsScene.addPixmap(self.scaledImage) 
 
 
+'''
 class FocalMechanism(QGraphicsView):
     def __init__(self):
         QGraphicsView.__init__(self)
@@ -270,18 +271,47 @@ class FocalMechanism(QGraphicsView):
         self.setScene(self.foc_mec)
         self.imageFocMec = QPixmap("./images/focalmechanisms.jpg")
         self.image_item = self.foc_mec.addPixmap(self.imageFocMec) 
+'''
+
+class FocalMechanism(QWidget):
+    def __init__(self):
+        QWidget.__init__(self)
+        
+        self.localLayout = QGridLayout()
+        self.setLayout(self.localLayout)
+#        self.localFrame.setLayout(self.localLayout)
+
+        self.foclabel = QLabel('')
+        self.imagefocmec = QPixmap("./images/focalmechanisms.jpg")
+        #scaledimage = imagefocmec.scaled(
+        #        QSize(localFrame.width(),localFrame.height()),Qt.KeepAspectRatioByExpanding)
+        self.scaledimage = self.imagefocmec.scaled(800,500)
+        self.foclabel.setPixmap(self.scaledimage)
+        
+        
+        self.localLayout.addWidget(self.foclabel)
+#        foc_mec = QGraphicsScene()
+#        view.setScene(foc_mec)
+#        self.addWidget(self.foc_mec)
+        #layout.addWidget(foc_mec)
+   #     self.setScene(self.foc_mec)
+    #    self.imageFocMec = QPixmap("./images/focalmechanisms.jpg")
+      #  self.image_item = self.foc_mec.addPixmap(self.imageFocMec) 
         
 
 class Tomographie(QGraphicsView):
     def __init__(self):
         QGraphicsView.__init__(self)
 
-        self.tomographieScene = QGraphicsScene()
-        self.setScene(self.tomographieScene)
+        #self.tomographieScene = QGraphicsScene()
+        #self.setScene(self.tomographieScene)
+        self.Tomolabel = QLabel('', self)
+        
         self.imageTomographie = QPixmap("./images/figure3dbis.jpg")
         self.scaledImage = self.imageTomographie.scaled(
                 QSize(self.width(),self.height()),Qt.KeepAspectRatioByExpanding)
-        self.image_item = self.tomographieScene.addPixmap(self.scaledImage)
+        #self.image_item = self.tomographieScene.addPixmap(self.scaledImage)
+        self.Tomolabel.setPixmap(self.scaledImage)
 
 class MineDemo(QApplication):
     
@@ -293,8 +323,8 @@ class MineDemo(QApplication):
        
         QApplication.__init__(self, args)
         
-        # read station's data and store to dictionary:
-        self._stations = load_stations('Stations.dat')
+        # read station's data and store to dictionary (temporarily deprecated):
+        # self._stations = load_stations('Stations.dat')
         
         self._win = QMainWindow()
         self._win.setGeometry(50,0,800,900)
@@ -328,6 +358,7 @@ class MineDemo(QApplication):
 
         tracesWidget = TracesWidget()
         locationWidget = LocationWidget()
+        locationWidget.setImage()
         focalMechanismWidget = FocalMechanism()
         statisticsWidget = Statistics()
         tomographieWidget = Tomographie()
