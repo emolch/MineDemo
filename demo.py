@@ -30,7 +30,7 @@ def load_stations(fn):
 
 class TracesWidget(pile_viewer.PileViewer):
 
-    def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=60):
+    def __init__(self, ntracks=6, use_opengl=False, panel_parent=None, follow=20):
         source_pile = pile.make_pile(['Demodataset_new.mseed'])
         p = hamster_pile.HamsterPile()
         p.set_fixation_length(20.)
@@ -38,6 +38,7 @@ class TracesWidget(pile_viewer.PileViewer):
                 use_opengl=use_opengl, panel_parent=panel_parent)
 
         self._tlast = time.time()
+        self._tlast_stalta = None
         self._tmin = source_pile.tmin + self._tlast % (source_pile.tmax - source_pile.tmin)
         
         v = self.get_view()
@@ -47,12 +48,12 @@ class TracesWidget(pile_viewer.PileViewer):
 
         self._timer = QTimer( self )
         self.connect( self._timer, SIGNAL("timeout()"), self.periodical ) 
-        self._timer.setInterval(4000)
+        self._timer.setInterval(1000)
         self._timer.start()
         
         self._detectiontimer = QTimer( self )
         self.connect( self._detectiontimer, SIGNAL("timeout()"), self.stalta ) 
-        self._detectiontimer.setInterval(8000)
+        self._detectiontimer.setInterval(3000)
         self._detectiontimer.start()
 
 
@@ -69,7 +70,7 @@ class TracesWidget(pile_viewer.PileViewer):
         def shiftinsert(tmin, tmax, tdelay):
             traces = source_pile.all(tmin=tmin, tmax=tmax)
             for trace in traces:
-                trace.shift(tdelay)
+                trace.shift(tdelay+1)
 
                 self.get_pile().insert_trace(trace)
       
@@ -80,6 +81,7 @@ class TracesWidget(pile_viewer.PileViewer):
             shiftinsert(tmin, tmax, self._tlast-tmin)
         
         self._tlast = tnow
+        self.get_view().update()
 
     def stalta(self):
         ''' 
@@ -87,32 +89,29 @@ class TracesWidget(pile_viewer.PileViewer):
         '''
 
         tnow = time.time() 
-        pile = self._source_pile
+        pile = self.get_view().pile
+        if self._tlast_stalta is None:
+            self._tlast_stalta = tnow
+            return
 
-        tlen = tnow - self._tlast
-        _tmin = pile.tmin + self._tlast % (pile.tmax - pile.tmin)
-        tmin, tmax = pile.get_tmin(), pile.get_tmax()
+        tmin = self._tlast_stalta
+        tmax = tnow
         
+        self._tlast_stalta = tnow
+
         swin, ratio = 0.07, 8
         lwin = swin * ratio
-        self.block_factor=8.
-        tinc = min(lwin * self.block_factor, tmax-tmin)
-        self.tpad_factor=7.
-        tpad = 15.0
+        
+        tpad = lwin
         ks = 1.0
         kl = 1.8
         kd = 0.
         level = 6.0
 
         _numMarkers = 0
-        show_level_traces = True
-        if show_level_traces and tmax-tmin > lwin * 150:
-            
-            print('Processing time window is longer than 150 x LTA window. Turning off display of level traces.')
-            show_level_traces = False
         
         self.markers = []
-        for traces in pile.chopper_grouped(tmin=tmin, tmax=tmax, tinc=tinc, tpad=tpad, want_incomplete=False,
+        for traces in pile.chopper_grouped(tmin=tmin, tmax=tmax, tpad=tpad, want_incomplete=True,
                 gather=lambda tr: tr.nslc_id[:3]):
 
             etr = None
@@ -148,32 +147,22 @@ class TracesWidget(pile_viewer.PileViewer):
                 
                 etr.chop(etr.tmin + lwin, etr.tmax - lwin)
                 tpeaks, apeaks, tzeros = etr.peaks(level, swin*2., deadtime=True)
-                if show_level_traces:
-                    #self._source_pile.add_traces([etr])
-                    pass
 
                 for t, a in zip(tpeaks, apeaks):
                     staz=nslcs[0]
                     
-                    # Add markers in a time frame tnow-11 to tnow-3 Seconds
-                    if (tnow-10<=t-_tmin+self._tlast<= tnow-1):
-                        
-                        if (pile.get_tmin() <= t <= pile.get_tmax()):
-                         
-                            mark = pile_viewer.Marker(nslcs, t-_tmin+self._tlast, t-_tmin+self._tlast)
-                            self.markers.append(mark)
+                    mark = pile_viewer.Marker(nslcs, t,t)
+                    print mark
+                    self.markers.append(mark)
+            print 'xx'
 
-        if len(self.markers) == 1:
-            mark0 = self.markers[0]
-            mark_l = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin-lwin+self._tlast, mark0.tmin+self._tlast,  kind=1)
-            mark_s = pile_viewer.Marker(mark0.nslc_ids, mark0.tmin+self._tlast, mark0.tmin+swin+self._tlast, kind=2)
-            self.markers.extend([mark_l, mark_s])
         v = self.get_view()
         _numMarkers+=len(self.markers)
         
         # emit signal, when Event was detected:
         if _numMarkers>=10:
             self.emit(SIGNAL('valueChanged(int)'),_numMarkers)
+
         v.add_markers(self.markers)
 
 
